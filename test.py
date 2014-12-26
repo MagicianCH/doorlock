@@ -2,19 +2,31 @@ import serial
 import time
 import MySQLdb
 
-ser = serial.Serial('/dev/ttyUSB0',115200)
-'''
-n = ser.write('hello world')
-print ser.portstr
-'''
-while True:
-#    ser.write('hello')
-#    time.sleep(3)
-    data = ser.read(20)
-    print data
-    if data[0] == 'A':
-        ser.write('yes')
+def dbQuerry(_id):
+    conn =MySQLdb.connect('localhost',user='root',passwd='chao',db='doorlock')
+    cur = conn.cursor()
+    queryStr = 'select id from doorlock where id=' + "\'" + _id + "\'"
+    flag = cur.execute(queryStr)
+    if flag != 0:
+        return 1
     else:
-        print 'world'
-    ser.flush()
-    time.sleep(1)
+        return 0
+    
+if __name__ == '__main__':
+    ser = serial.Serial('/dev/ttyUSB0',115200)
+    print ser.portstr
+    
+    while True:
+        data = ser.read(20)
+        result = dbQuerry(data)
+        
+        if result == 1:
+            ser.write('\x01')
+            print data
+            result = 0
+        else:
+            ser.write('\x02')
+            print 'no'
+            result = 0
+        ser.flush()
+        time.sleep(1)
